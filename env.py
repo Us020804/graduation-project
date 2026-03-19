@@ -8,11 +8,12 @@ from uav import UAV
 
 class UAVEnv:
     def __init__(self, sumocfg_file, uav_start=(1600, 1600),
-                 uav_radius=200, step_size=20,
-                 x_min=0, x_max=5000, y_min=0, y_max=5000,
-                 max_steps=20, gui=False):
+                uav_radius=200, step_size=20,
+                x_min=0, x_max=5000, y_min=0, y_max=5000,
+                max_steps=20, gui=False, move_cost=0.0):
         self.sumocfg_file = sumocfg_file
         self.gui = gui
+        self.move_cost = move_cost
 
         self.uav = UAV(
             x=uav_start[0],
@@ -100,11 +101,11 @@ class UAVEnv:
         covered_count = self.count_covered_vehicles()
 
         if action == 'STAY':
-            move_cost = 0
+            move_penalty = 0
         else:
-            move_cost = 0.1
-        #移动代价让stay更有吸引力，鼓励无人机在覆盖较多车辆的位置停留，而不是频繁移动，减少能量损耗
-        reward = covered_count - move_cost
+            move_penalty = self.move_cost
+
+        reward = covered_count - move_penalty
 
         done = self.step_count >= self.max_steps
         return next_state, reward, done
