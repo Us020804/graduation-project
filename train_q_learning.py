@@ -1,5 +1,6 @@
 from env import UAVEnv
 from q_learning import QLearningAgent
+import json
 
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY']
 
@@ -9,11 +10,12 @@ env = UAVEnv(
     uav_radius=200,
     step_size=20,
     x_min=0,
-    x_max=5000,
+    x_max=2938,
     y_min=0,
-    y_max=5000,
+    y_max=2318,
     max_steps=20,
-    gui=False
+    gui=False,
+    move_cost=0.1
 )
 
 agent = QLearningAgent(
@@ -38,13 +40,14 @@ for episode in range(episodes):
     for step in range(env.max_steps):
         action = agent.choose_action(state)
         next_state, reward, done = env.step(action)
-        agent.learn(state, action, reward, next_state)
+
+        agent.learn(state, action, reward, next_state, done)
 
         total_reward += reward
         state = next_state
 
         if episode == 0 and step < 10:
-            print(f"  step={step+1}, action={action}, next_state={next_state}, reward={reward}")
+            print(f"  step={step+1}, action={action}, next_state={next_state}, reward={reward}, done={done}")
 
         if done:
             break
@@ -58,3 +61,8 @@ print("训练完成")
 print("Q表状态数量：", len(agent.q_table))
 print("每轮总奖励列表：")
 print(reward_history)
+
+with open("q_learning_rewards.json", "w", encoding="utf-8") as f:
+    json.dump(reward_history, f, ensure_ascii=False)
+
+print("奖励结果已保存到 q_learning_rewards.json")

@@ -1,6 +1,14 @@
 import os
 import sys
 import math
+
+if 'SUMO_HOME' not in os.environ:
+    raise EnvironmentError("未检测到 SUMO_HOME 环境变量，请先配置 SUMO_HOME")
+
+tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
+if tools not in sys.path:
+    sys.path.append(tools)
+
 import traci
 
 from uav import UAV
@@ -8,9 +16,9 @@ from uav import UAV
 
 class UAVEnv:
     def __init__(self, sumocfg_file, uav_start=(1600, 1600),
-                uav_radius=200, step_size=20,
-                x_min=0, x_max=5000, y_min=0, y_max=5000,
-                max_steps=20, gui=False, move_cost=0.0):
+                 uav_radius=200, step_size=20,
+                 x_min=0, x_max=5000, y_min=0, y_max=5000,
+                 max_steps=20, gui=False, move_cost=0.0):
         self.sumocfg_file = sumocfg_file
         self.gui = gui
         self.move_cost = move_cost
@@ -31,22 +39,18 @@ class UAVEnv:
         self.max_steps = max_steps
         self.started = False
 
-    def start_sumo(self):
-        if 'SUMO_HOME' in os.environ:
-            tools = os.path.join(os.environ['SUMO_HOME'], 'tools')
-            if tools not in sys.path:
-                sys.path.append(tools)
+    def start_sumo(self, gui=False):
+        if gui:
+            sumo_binary = "sumo-gui"
         else:
-            print("警告：未检测到 SUMO_HOME 环境变量，请确认 SUMO 已正确安装")
+            sumo_binary = "sumo"
 
-        sumo_binary = "sumo-gui" if self.gui else "sumo"
-
-        traci.start([
+        sumo_cmd = [
             sumo_binary,
-            "-c", self.sumocfg_file,
-            "--no-step-log", "true",
-            "--duration-log.disable", "true"
-        ])
+            "-c", self.sumocfg_file
+        ]
+
+        traci.start(sumo_cmd)
         self.started = True
 
     def close_sumo(self):
@@ -89,7 +93,7 @@ class UAVEnv:
         if self.started:
             self.close_sumo()
 
-        self.start_sumo()
+        self.start_sumo(self.gui)
         self.reset_uav()
         return self.get_state()
 

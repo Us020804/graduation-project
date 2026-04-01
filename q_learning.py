@@ -26,11 +26,15 @@ class QLearningAgent:
 
         return action
 
-    def learn(self, state, action, reward, next_state):
+    def learn(self, state, action, reward, next_state, done):
         self.check_state_exist(state)
         self.check_state_exist(next_state)
 
         q_predict = self.q_table[state][action]
-        q_target = reward + self.gamma * max(self.q_table[next_state].values())
+
+        if done:
+            q_target = reward
+        else:
+            q_target = reward + self.gamma * max(self.q_table[next_state].values())
 
         self.q_table[state][action] += self.alpha * (q_target - q_predict)
