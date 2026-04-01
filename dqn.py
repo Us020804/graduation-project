@@ -86,32 +86,37 @@ class DQNAgent:
         self.learn_step_count = 0
 
     def normalize_state(self, state):
-    
         state = np.array(state, dtype=np.float32)
 
+        # 兼容旧版二维状态
         if len(state) == 2:
             x, y = state
-            return np.array([x / 5000.0, y / 5000.0], dtype=np.float32)
+            return np.array([
+                x / 3000.0,
+                y / 2400.0
+            ], dtype=np.float32)
 
+        # 兼容旧版5维状态
         elif len(state) == 5:
             x, y, dx, dy, covered = state
             return np.array([
-                x / 5000.0,
-                y / 5000.0,
-                np.clip(dx / 500.0, -1.0, 1.0),
-                np.clip(dy / 500.0, -1.0, 1.0),
+                x / 3000.0,
+                y / 2400.0,
+                np.clip(dx / 1000.0, -1.0, 1.0),
+                np.clip(dy / 1000.0, -1.0, 1.0),
                 np.clip(covered / 10.0, 0.0, 1.0)
             ], dtype=np.float32)
 
+        # 当前项目推荐使用的6维状态
         elif len(state) == 6:
             x, y, dx, dy, covered, vehicle_count = state
             return np.array([
-                x / 5000.0,
-                y / 5000.0,
-                np.clip(dx / 500.0, -1.0, 1.0),
-                np.clip(dy / 500.0, -1.0, 1.0),
+                x / 3000.0,
+                y / 2400.0,
+                np.clip(dx / 1000.0, -1.0, 1.0),
+                np.clip(dy / 1000.0, -1.0, 1.0),
                 np.clip(covered / 10.0, 0.0, 1.0),
-                np.clip(vehicle_count / 20.0, 0.0, 1.0)
+                np.clip(vehicle_count / 300.0, 0.0, 1.0)
             ], dtype=np.float32)
 
         else:
@@ -123,9 +128,13 @@ class DQNAgent:
         if random.random() < self.epsilon:
             action_idx = random.randint(0, self.action_dim - 1)
         else:
-            state_tensor = torch.tensor(state, dtype=torch.float32).unsqueeze(0).to(self.device)
+            state_tensor = torch.tensor(
+                state, dtype=torch.float32
+            ).unsqueeze(0).to(self.device)
+
             with torch.no_grad():
                 q_values = self.q_net(state_tensor)
+
             action_idx = int(torch.argmax(q_values, dim=1).item())
 
         return self.actions[action_idx], action_idx

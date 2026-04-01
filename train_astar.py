@@ -1,5 +1,6 @@
 from env import UAVEnv
 from astar import AStarPlanner
+import json
 
 env = UAVEnv(
     sumocfg_file="jnu_clean.sumocfg",
@@ -7,18 +8,19 @@ env = UAVEnv(
     uav_radius=200,
     step_size=20,
     x_min=0,
-    x_max=5000,
+    x_max=2938,
     y_min=0,
-    y_max=5000,
+    y_max=2318,
     max_steps=20,
-    gui=False
+    gui=False,
+    move_cost=0.1
 )
 
 planner = AStarPlanner(
     x_min=0,
-    x_max=5000,
+    x_max=2938,
     y_min=0,
-    y_max=5000,
+    y_max=2318,
     step_size=20
 )
 
@@ -60,3 +62,8 @@ env.close_sumo()
 print("A* 测试完成")
 print("每轮总奖励列表：")
 print(reward_history)
+
+with open("astar_rewards.json", "w", encoding="utf-8") as f:
+    json.dump(reward_history, f, ensure_ascii=False)
+
+print("奖励结果已保存到 astar_rewards.json")
