@@ -13,7 +13,7 @@ env = UAVEnv(
     x_max=2938,
     y_min=0,
     y_max=2318,
-    max_steps=20,
+    max_steps=50,
     gui=False,
     move_cost=0.1
 )
@@ -28,7 +28,7 @@ agent = QLearningAgent(
 episodes = 30
 reward_history = []
 
-print("当前训练版本：包含 STAY 动作，并记录每轮总奖励")
+print("当前训练版本：Q-learning（包含 STAY 动作，并记录每轮总奖励）")
 
 for episode in range(episodes):
     state = env.reset()
@@ -65,4 +65,7 @@ print(reward_history)
 with open("q_learning_rewards.json", "w", encoding="utf-8") as f:
     json.dump(reward_history, f, ensure_ascii=False)
 
+agent.save_q_table("q_learning_q_table.pkl")
+
 print("奖励结果已保存到 q_learning_rewards.json")
+print("Q表已保存到 q_learning_q_table.pkl")

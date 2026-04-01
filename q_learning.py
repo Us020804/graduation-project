@@ -1,3 +1,4 @@
+import pickle
 import random
 
 
@@ -26,6 +27,13 @@ class QLearningAgent:
 
         return action
 
+    def choose_best_action(self, state):
+        self.check_state_exist(state)
+        state_actions = self.q_table[state]
+        max_q = max(state_actions.values())
+        best_actions = [a for a, q in state_actions.items() if q == max_q]
+        return random.choice(best_actions)
+
     def learn(self, state, action, reward, next_state, done):
         self.check_state_exist(state)
         self.check_state_exist(next_state)
@@ -38,3 +46,11 @@ class QLearningAgent:
             q_target = reward + self.gamma * max(self.q_table[next_state].values())
 
         self.q_table[state][action] += self.alpha * (q_target - q_predict)
+
+    def save_q_table(self, filepath):
+        with open(filepath, "wb") as f:
+            pickle.dump(self.q_table, f)
+
+    def load_q_table(self, filepath):
+        with open(filepath, "rb") as f:
+            self.q_table = pickle.load(f)

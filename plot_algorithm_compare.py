@@ -1,52 +1,131 @@
+import json
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 
-# Q-learning：无移动代价
-q_no_cost = [
-    47, 47, 48, 48, 48, 47, 48, 48, 48, 48,
-    48, 48, 49, 48, 48, 48, 48, 47, 48, 67,
-    48, 48, 65, 47, 48, 48, 48, 50, 47, 48
-]
 
-# Q-learning：有移动代价
-q_with_cost = [
-    39.8, 40.0, 43.5, 43.9, 48.7, 39.1, 43.8, 44.6, 52.5, 43.5,
-    43.7, 43.8, 43.6, 43.7, 43.4, 43.6, 43.8, 43.8, 43.6, 43.7,
-    40.0, 47.4, 43.7, 43.6, 43.6, 45.5, 42.9, 43.2, 43.5, 43.8
-]
+BASE_DIR = Path(__file__).resolve().parent
 
-# A* 基线
-astar_rewards = [50.1] * 30
+SCENARIOS = {
+    "Normal Traffic": {
+        "A*": "astar_rewards.json",
+        "Q-learning": "q_learning_eval_rewards.json",
+        "DQN": "dqn_eval_rewards.json",
+    },
+    "Peak Canteen Traffic": {
+        "A*": "astar_peak_canteen_rewards.json",
+        "Q-learning": "q_learning_peak_canteen_eval_rewards.json",
+        "DQN": "dqn_peak_canteen_eval_rewards.json",
+    },
+}
 
-episodes = list(range(1, 31))
+SCENARIO_OUTPUTS = {
+    "Normal Traffic": "normal_comparison.png",
+    "Peak Canteen Traffic": "peak_comparison.png",
+}
+
+BAR_OUTPUT = "normal_vs_peak_bar.png"
+
+
+def load_rewards(filename):
+    path = BASE_DIR / filename
+    with path.open("r", encoding="utf-8") as f:
+        return json.load(f)
+
 
 def moving_average(data, window=5):
     result = []
     for i in range(len(data)):
         start = max(0, i - window + 1)
-        avg = sum(data[start:i+1]) / len(data[start:i+1])
-        result.append(avg)
+        result.append(sum(data[start:i + 1]) / len(data[start:i + 1]))
     return result
 
-q_no_cost_ma = moving_average(q_no_cost, 5)
-q_with_cost_ma = moving_average(q_with_cost, 5)
 
-plt.figure(figsize=(10, 6))
+def plot_scenario(title, results, output_name):
+    common_len = min(len(values) for values in results.values())
+    trimmed = {name: values[:common_len] for name, values in results.items()}
+    episodes = list(range(1, common_len + 1))
 
-plt.plot(episodes, q_no_cost, marker='o', label='Q-learning (No Move Cost)')
-plt.plot(episodes, q_with_cost, marker='s', label='Q-learning (With Move Cost)')
-plt.plot(episodes, astar_rewards, linestyle='--', linewidth=2, label='A* Baseline')
+    plt.figure(figsize=(11, 6))
 
-plt.plot(episodes, q_no_cost_ma, label='Q-learning No Cost MA(5)')
-plt.plot(episodes, q_with_cost_ma, label='Q-learning With Cost MA(5)')
+    for name, rewards in trimmed.items():
+        plt.plot(episodes, rewards, marker="o", linewidth=1.8, label=name)
+        plt.plot(
+            episodes,
+            moving_average(rewards, window=5),
+            linewidth=2.2,
+            linestyle="--",
+            label=f"{name} MA(5)"
+        )
 
-plt.xlabel('Episode')
-plt.ylabel('Total Reward')
-plt.title('Algorithm Performance Comparison')
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.show()
+    plt.xlabel("Episode")
+    plt.ylabel("Total Reward")
+    plt.title(f"{title} Algorithm Comparison Using Evaluation Results")
+    plt.legend()
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(BASE_DIR / output_name, dpi=200)
+    plt.close()
 
-print("Q-learning 无移动代价平均奖励：", round(sum(q_no_cost) / len(q_no_cost), 2))
-print("Q-learning 有移动代价平均奖励：", round(sum(q_with_cost) / len(q_with_cost), 2))
-print("A* 平均奖励：", round(sum(astar_rewards) / len(astar_rewards), 2))
+    print(f"\n{title}:")
+    for name, rewards in trimmed.items():
+        avg_reward = sum(rewards) / len(rewards)
+        print(
+            f"  {name}: avg={avg_reward:.2f}, "
+            f"min={min(rewards):.2f}, max={max(rewards):.2f}"
+        )
+
+
+def plot_normal_vs_peak_bars(scenario_results, output_name):
+    algorithms = ["A*", "Q-learning", "DQN"]
+    normal_avgs = []
+    peak_avgs = []
+
+    for algorithm in algorithms:
+        normal_rewards = scenario_results["Normal Traffic"][algorithm]
+        peak_rewards = scenario_results["Peak Canteen Traffic"][algorithm]
+        normal_avgs.append(sum(normal_rewards) / len(normal_rewards))
+        peak_avgs.append(sum(peak_rewards) / len(peak_rewards))
+
+    x = range(len(algorithms))
+    width = 0.35
+
+    plt.figure(figsize=(10, 6))
+    plt.bar([i - width / 2 for i in x], normal_avgs, width=width, label="Normal Traffic")
+    plt.bar([i + width / 2 for i in x], peak_avgs, width=width, label="Peak Canteen Traffic")
+    plt.xticks(list(x), algorithms)
+    plt.ylabel("Average Total Reward")
+    plt.title("Average Evaluation Reward Across Traffic Scenarios")
+    plt.legend()
+    plt.grid(axis="y", linestyle="--", alpha=0.5)
+    plt.tight_layout()
+    plt.savefig(BASE_DIR / output_name, dpi=200)
+    plt.close()
+
+    print("\nAverage evaluation reward by scenario:")
+    for algorithm, normal_avg, peak_avg in zip(algorithms, normal_avgs, peak_avgs):
+        print(f"  {algorithm}: normal={normal_avg:.2f}, peak={peak_avg:.2f}")
+
+
+def main():
+    scenario_results = {}
+
+    for scenario_name, files in SCENARIOS.items():
+        scenario_results[scenario_name] = {
+            algorithm: load_rewards(filename)
+            for algorithm, filename in files.items()
+        }
+
+    for scenario_name, results in scenario_results.items():
+        plot_scenario(scenario_name, results, SCENARIO_OUTPUTS[scenario_name])
+
+    plot_normal_vs_peak_bars(scenario_results, BAR_OUTPUT)
+
+    print("\nSaved figures:")
+    for output_name in SCENARIO_OUTPUTS.values():
+        print(f"  {output_name}")
+    print(f"  {BAR_OUTPUT}")
+
+
+if __name__ == "__main__":
+    main()

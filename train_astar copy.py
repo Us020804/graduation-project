@@ -11,7 +11,7 @@ env = UAVEnv(
     x_max=2938,
     y_min=0,
     y_max=2318,
-    max_steps=20,
+    max_steps=50,
     gui=False,
     move_cost=0.1
 )

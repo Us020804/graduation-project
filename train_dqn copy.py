@@ -63,7 +63,7 @@ env = UAVEnv(
     x_max=2938,
     y_min=0,
     y_max=2318,
-    max_steps=20,
+    max_steps=50,
     gui=False,
     move_cost=0.1
 )
@@ -128,7 +128,7 @@ for episode in range(episodes):
 
         if eval_reward > best_eval_reward:
             best_eval_reward = eval_reward
-            torch.save(agent.q_net.state_dict(), "dqn_best.pth")
+            torch.save(agent.q_net.state_dict(), "dqn_peak_canteen_best.pth")
             print(f"  >>> 保存新最优模型，best eval reward = {best_eval_reward:.2f}")
 
     avg_loss = sum(loss_history) / len(loss_history) if loss_history else None

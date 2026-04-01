@@ -1,12 +1,14 @@
+import json
+
 from env import UAVEnv
 from q_learning import QLearningAgent
-import json
 
 
 ACTIONS = ['UP', 'DOWN', 'LEFT', 'RIGHT', 'STAY']
 
+
 env = UAVEnv(
-    sumocfg_file="jnu_peak_canteen.sumocfg",
+    sumocfg_file="jnu_clean.sumocfg",
     uav_start=(1600, 1600),
     uav_radius=200,
     step_size=20,
@@ -23,29 +25,23 @@ agent = QLearningAgent(
     actions=ACTIONS,
     alpha=0.1,
     gamma=0.9,
-    epsilon=0.1
+    epsilon=0.0
 )
+
+agent.load_q_table("q_learning_q_table.pkl")
 
 episodes = 30
 reward_history = []
 
-print("Current training: Q-learning on peak canteen traffic")
+print("Current evaluation: Q-learning greedy policy")
 
 for episode in range(episodes):
     state = env.reset()
     total_reward = 0
 
-    start_covered = env.count_covered_vehicles()
-    print(
-        f"Episode {episode + 1} start state {state}, "
-        f"start covered vehicles {start_covered}"
-    )
-
     for step in range(env.max_steps):
-        action = agent.choose_action(state)
+        action = agent.choose_best_action(state)
         next_state, reward, done = env.step(action)
-
-        agent.learn(state, action, reward, next_state, done)
 
         total_reward += reward
         state = next_state
@@ -53,7 +49,7 @@ for episode in range(episodes):
         if episode == 0 and step < 10:
             print(
                 f"  step={step + 1}, action={action}, "
-                f"next_state={next_state}, reward={reward}, done={done}"
+                f"next_state={next_state}, reward={reward:.2f}"
             )
 
         if done:
@@ -64,14 +60,12 @@ for episode in range(episodes):
 
 env.close_sumo()
 
-print("Training completed")
-print("Q-table size:", len(agent.q_table))
+avg_reward = sum(reward_history) / len(reward_history)
+print("Q-learning evaluation completed")
 print(reward_history)
+print(f"Average reward: {avg_reward:.2f}")
 
-with open("q_learning_peak_canteen_rewards.json", "w", encoding="utf-8") as f:
+with open("q_learning_eval_rewards.json", "w", encoding="utf-8") as f:
     json.dump(reward_history, f, ensure_ascii=False)
 
-agent.save_q_table("q_learning_peak_canteen_q_table.pkl")
-
-print("Saved q_learning_peak_canteen_rewards.json")
-print("Saved q_learning_peak_canteen_q_table.pkl")
+print("Saved q_learning_eval_rewards.json")

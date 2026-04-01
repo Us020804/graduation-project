@@ -30,7 +30,7 @@ def build_dqn_state(env):
 
 
 env = UAVEnv(
-    sumocfg_file="jnu_clean.sumocfg",
+    sumocfg_file="jnu_peak_canteen.sumocfg",
     uav_start=(1600, 1600),
     uav_radius=200,
     step_size=20,
@@ -57,7 +57,7 @@ agent = DQNAgent(
     buffer_capacity=5000
 )
 
-agent.q_net.load_state_dict(torch.load("dqn_best.pth", map_location="cpu"))
+agent.q_net.load_state_dict(torch.load("dqn_peak_canteen_best.pth", map_location="cpu"))
 agent.target_net.load_state_dict(agent.q_net.state_dict())
 agent.q_net.eval()
 agent.target_net.eval()
@@ -65,7 +65,7 @@ agent.target_net.eval()
 episodes = 30
 reward_history = []
 
-print("Current evaluation: DQN greedy policy")
+print("Current evaluation: DQN greedy policy on peak canteen traffic")
 
 for episode in range(episodes):
     env.reset()
@@ -95,11 +95,11 @@ for episode in range(episodes):
 env.close_sumo()
 
 avg_reward = sum(reward_history) / len(reward_history)
-print("DQN evaluation completed")
+print("Peak canteen DQN evaluation completed")
 print(reward_history)
 print(f"Average reward: {avg_reward:.2f}")
 
-with open("dqn_eval_rewards.json", "w", encoding="utf-8") as f:
+with open("dqn_peak_canteen_eval_rewards.json", "w", encoding="utf-8") as f:
     json.dump(reward_history, f, ensure_ascii=False)
 
-print("Saved dqn_eval_rewards.json")
+print("Saved dqn_peak_canteen_eval_rewards.json")
