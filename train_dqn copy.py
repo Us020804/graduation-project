@@ -82,7 +82,7 @@ agent = DQNAgent(
     buffer_capacity=5000
 )
 
-episodes = 100
+episodes = 200
 best_eval_reward = float('-inf')
 reward_history = []
 eval_history = []
