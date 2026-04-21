@@ -39,7 +39,7 @@ env = UAVEnv(
     y_min=0,
     y_max=2318,
     max_steps=50,
-    gui=False,
+    gui=True,
     move_cost=0.1
 )
 
@@ -62,7 +62,7 @@ agent.target_net.load_state_dict(agent.q_net.state_dict())
 agent.q_net.eval()
 agent.target_net.eval()
 
-episodes = 30
+episodes = 1
 reward_history = []
 
 print("Current evaluation: DQN greedy policy")

@@ -12,7 +12,7 @@ env = UAVEnv(
     y_min=0,
     y_max=2318,
     max_steps=50,
-    gui=False,
+    gui=True,
     move_cost=0.1
 )
 
@@ -24,7 +24,7 @@ planner = AStarPlanner(
     step_size=20
 )
 
-episodes = 30
+episodes = 1
 reward_history = []
 
 print("当前测试版本：A* 多轮基线")
